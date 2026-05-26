@@ -2,7 +2,9 @@ services:
   - type: web
     name: iwasscam-api
     runtime: docker
+    rootDir: backend
     dockerfilePath: ./Dockerfile
+    dockerCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
     region: singapore
     plan: free
     healthCheckPath: /api/v1/health
@@ -25,12 +27,13 @@ services:
         value: "false"
       - key: USE_LLM
         value: "false"
-    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
 
   - type: worker
     name: iwasscam-celery
     runtime: docker
+    rootDir: backend
     dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.workers.celery_app worker -Q default,heavy --loglevel=info
     region: singapore
     plan: free
     envVars:
@@ -47,4 +50,3 @@ services:
         value: production
       - key: USE_LLM
         value: "false"
-    startCommand: celery -A app.workers.celery_app worker -Q default,heavy --loglevel=info
