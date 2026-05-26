@@ -139,7 +139,7 @@ class TestImageEndpoint:
     async def test_image_accepts_valid_png_and_returns_scan(self, client):
         import base64
         png_bytes = base64.b64decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=="
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
         )
         response = await client.post(
             "/api/v1/scan/image",
@@ -171,7 +171,7 @@ class TestQrEndpoint:
     async def test_qr_accepts_valid_png_and_returns_scan(self, client):
         import base64
         png_bytes = base64.b64decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=="
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
         )
         _qr_state = {
             "decoded_content": "https://example.com",

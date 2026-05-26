@@ -192,6 +192,16 @@ async def scan_image(
             detail="File too large",
         )
 
+    from app.services import clamav_service
+    from app.services.image_sanitizer import ImageSanitizationError, sanitize_image
+
+    await clamav_service.scan_bytes(image_bytes)
+
+    try:
+        image_bytes = sanitize_image(image_bytes)
+    except ImageSanitizationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
     try:
         rag_context = await rag_service.retrieve(db, "screenshot image analysis suspicious")
     except Exception:
@@ -348,6 +358,16 @@ async def scan_qr(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File too large",
         )
+
+    from app.services import clamav_service
+    from app.services.image_sanitizer import ImageSanitizationError, sanitize_image
+
+    await clamav_service.scan_bytes(image_bytes)
+
+    try:
+        image_bytes = sanitize_image(image_bytes)
+    except ImageSanitizationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
 
     from app.agents.qr_agent import qr_graph
 

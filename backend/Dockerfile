@@ -1,4 +1,4 @@
-# Stage 1: install dependencies
+# Stage 1: install Python dependencies
 FROM python:3.11-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
@@ -8,13 +8,17 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /build
-COPY pyproject.toml .
-RUN uv pip install --system --no-cache -e .
+COPY pyproject.toml uv.lock ./
+COPY app/ ./app/
+RUN uv pip install --system --no-cache .
 
 # Stage 2: minimal runtime image
 FROM python:3.11-slim AS runtime
 
-RUN apt-get update \
+# System deps: tesseract (pytesseract OCR) + libzbar (pyzbar QR decode)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr \
+    libzbar0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

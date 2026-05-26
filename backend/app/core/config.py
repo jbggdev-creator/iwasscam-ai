@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
     max_request_body_bytes: int = 1024 * 1024       # 1 MB JSON limit
     max_upload_bytes: int = 10 * 1024 * 1024        # 10 MB file upload limit
+    clamav_enabled: bool = False
+    clamav_socket: str = "/var/run/clamav/clamd.ctl"
+    clamav_host: str = "localhost"
+    clamav_port: int = 3310
 
     # Observability
     otel_enabled: bool = False

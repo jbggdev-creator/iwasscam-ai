@@ -16,4 +16,12 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    task_routes={
+        "app.workers.tasks.scan_image_task": {"queue": "heavy"},
+        "app.workers.tasks.scan_qr_task": {"queue": "heavy"},
+        "app.workers.tasks.scan_url_task": {"queue": "default"},
+        "app.workers.tasks.scan_text_task": {"queue": "default"},
+    },
 )
