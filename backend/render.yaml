@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: iwasscam-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql+asyncpg://postgres:263cbddd-fb1b-4d9b-b780-448c87aa5a7a@db.sgteplpggutfomvqpyma.supabase.co:5432/postgres
+      - key: REDIS_URL
+        value: rediss://default:gQAAAAAAAZEFAAIgcDFjMjczZTNjMDA0MGY0ZWZhYjUyNmQ4MjdiMTVmMzc3NQ@inviting-clam-102661.upstash.io:6379
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://frontend-six-kappa-31.vercel.app
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_FORMAT
+        value: json
+      - key: CLAMAV_ENABLED
+        value: "false"
+      - key: USE_LLM
+        value: "false"
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
+
+  - type: worker
+    name: iwasscam-celery
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql+asyncpg://postgres:263cbddd-fb1b-4d9b-b780-448c87aa5a7a@db.sgteplpggutfomvqpyma.supabase.co:5432/postgres
+      - key: REDIS_URL
+        value: rediss://default:gQAAAAAAAZEFAAIgcDFjMjczZTNjMDA0MGY0ZWZhYjUyNmQ4MjdiMTVmMzc3NQ@inviting-clam-102661.upstash.io:6379
+      - key: SECRET_KEY
+        fromService:
+          name: iwasscam-api
+          type: web
+          envVarKey: SECRET_KEY
+      - key: ENVIRONMENT
+        value: production
+      - key: USE_LLM
+        value: "false"
+    startCommand: celery -A app.workers.celery_app worker -Q default,heavy --loglevel=info
