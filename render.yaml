@@ -27,26 +27,3 @@ services:
         value: "false"
       - key: USE_LLM
         value: "false"
-
-  - type: worker
-    name: iwasscam-celery
-    runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerCommand: celery -A app.workers.celery_app worker -Q default,heavy --loglevel=info
-    region: singapore
-    plan: free
-    envVars:
-      - key: DATABASE_URL
-        value: postgresql+asyncpg://postgres:263cbddd-fb1b-4d9b-b780-448c87aa5a7a@db.sgteplpggutfomvqpyma.supabase.co:5432/postgres
-      - key: REDIS_URL
-        value: rediss://default:gQAAAAAAAZEFAAIgcDFjMjczZTNjMDA0MGY0ZWZhYjUyNmQ4MjdiMTVmMzc3NQ@inviting-clam-102661.upstash.io:6379
-      - key: SECRET_KEY
-        fromService:
-          name: iwasscam-api
-          type: web
-          envVarKey: SECRET_KEY
-      - key: ENVIRONMENT
-        value: production
-      - key: USE_LLM
-        value: "false"
