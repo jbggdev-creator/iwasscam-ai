@@ -15,10 +15,11 @@ RUN uv pip install --system --no-cache .
 # Stage 2: minimal runtime image
 FROM python:3.11-slim AS runtime
 
-# System deps: tesseract (pytesseract OCR) + libzbar (pyzbar QR decode)
+# System deps: tesseract (OCR) + libzbar (QR) + ca-certificates (SSL to Supabase)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     libzbar0 \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

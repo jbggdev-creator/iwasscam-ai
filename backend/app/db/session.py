@@ -20,7 +20,11 @@ def _asyncpg_connect_args(database_url: str, ssl: bool) -> tuple[str, dict]:
     clean_url = f"postgresql+asyncpg://{host}:{port}/{database}"
     connect_args: dict = {"user": username, "password": password}
     if ssl:
-        connect_args["ssl"] = True
+        import ssl as _ssl
+        ssl_ctx = _ssl.create_default_context()
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = _ssl.CERT_NONE
+        connect_args["ssl"] = ssl_ctx
     return clean_url, connect_args
 
 
