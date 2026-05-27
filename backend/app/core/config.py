@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     clamav_host: str = "localhost"
     clamav_port: int = 3310
 
+    # Threat intelligence
+    urlhaus_enabled: bool = True
+    phishtank_api_key: str = ""
+
     # Observability
     otel_enabled: bool = False
     otel_endpoint: str = ""
@@ -65,3 +69,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
+

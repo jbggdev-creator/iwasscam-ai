@@ -95,6 +95,8 @@ class UrlFeatures:
     whois_error: bool
     is_brand_impersonation: bool
     impersonated_brand: str
+    is_known_threat: bool
+    threat_source: str  # "URLhaus" | "PhishTank" | ""
 
 
 def _shannon_entropy(text: str) -> float:
@@ -161,10 +163,46 @@ async def _follow_redirects(url: str) -> tuple[int, str]:
     return redirect_count, current_url
 
 
+async def _check_urlhaus(url: str) -> bool:
+    """Returns True if URL is listed in the URLhaus malware/phishing database."""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.post(
+                "https://urlhaus-api.abuse.ch/v1/url/",
+                data={"url": url},
+            )
+            return resp.json().get("query_status") == "is_listed"
+    except Exception:
+        return False
+
+
+async def _check_phishtank(url: str, api_key: str) -> bool:
+    """Returns True if URL is a verified phishing site in PhishTank."""
+    if not api_key:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.post(
+                "https://checkurl.phishtank.com/checkurl/",
+                data={"url": url, "format": "json", "app_key": api_key},
+            )
+            results = resp.json().get("results", {})
+            return bool(results.get("in_database") and results.get("valid"))
+    except Exception:
+        return False
+
+
+async def _noop_false() -> bool:
+    return False
+
+
 class UrlIntelligenceService:
     """Extracts security-relevant signals from a URL without user data logging."""
 
     async def analyze(self, url: str) -> UrlFeatures:
+        from app.core.config import get_settings
+        settings = get_settings()
+
         parsed = urlparse(url)
         extracted = tldextract.extract(url)
 
@@ -179,6 +217,12 @@ class UrlIntelligenceService:
         url_entropy = _shannon_entropy(url)
         is_suspicious_tld = tld.lower() in _SUSPICIOUS_TLDS
         is_brand_impersonation, impersonated_brand = detect_brand_impersonation(domain)
+
+        urlhaus_coro = _check_urlhaus(url) if settings.urlhaus_enabled else _noop_false()
+        phishtank_coro = _check_phishtank(url, settings.phishtank_api_key)
+        urlhaus_hit, phishtank_hit = await asyncio.gather(urlhaus_coro, phishtank_coro)
+        is_known_threat = urlhaus_hit or phishtank_hit
+        threat_source = "URLhaus" if urlhaus_hit else ("PhishTank" if phishtank_hit else "")
 
         return UrlFeatures(
             url=url,
@@ -195,4 +239,6 @@ class UrlIntelligenceService:
             whois_error=whois_error,
             is_brand_impersonation=is_brand_impersonation,
             impersonated_brand=impersonated_brand,
+            is_known_threat=is_known_threat,
+            threat_source=threat_source,
         )

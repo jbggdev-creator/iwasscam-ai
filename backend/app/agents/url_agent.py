@@ -32,6 +32,14 @@ def _score_features(features: UrlFeatures) -> tuple[int, str, float, list[dict]]
     def _finding(finding_type: str, description: str, severity: str) -> dict:
         return {"finding_type": finding_type, "description": description, "severity": severity}
 
+    if features.is_known_threat:
+        score += 70
+        findings.append(_finding(
+            "known_threat_database",
+            f"This URL is listed in the {features.threat_source} threat intelligence database as a confirmed malware or phishing site. Do NOT visit this site under any circumstances.",
+            "critical",
+        ))
+
     if features.is_brand_impersonation:
         score += 60
         findings.append(_finding(
@@ -164,6 +172,8 @@ async def _llm_explanation(features: UrlFeatures, risk_level: str) -> str:
             "url_entropy": round(features.url_entropy, 2),
             "is_brand_impersonation": features.is_brand_impersonation,
             "impersonated_brand": features.impersonated_brand,
+            "is_known_threat": features.is_known_threat,
+            "threat_source": features.threat_source,
             "risk_level": risk_level,
         })
         response = await llm.ainvoke([
