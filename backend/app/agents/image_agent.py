@@ -63,38 +63,58 @@ async def _detect_signals_node(state: ImageAnalysisState) -> ImageAnalysisState:
 
         text_lower = extracted_text.lower()
 
-        if any(kw in text_lower for kw in ("gcash", "paymaya", "maya")):
-            has_amount = any(marker in extracted_text for marker in ("₱", "PHP"))
-            has_ref = any(
-                kw in text_lower for kw in ("reference", "ref no", "transaction")
-            )
-            if has_amount and has_ref:
-                findings.append(
-                    {
-                        "finding_type": "fake_receipt_pattern",
-                        "description": (
-                            "Image contains GCash/PayMaya receipt-like content. "
-                            "Verify this transaction directly in your app."
-                        ),
-                        "severity": "high",
-                    }
-                )
-                image_score += 25
+        # Prize / lottery / giveaway scam — "you won an iPhone", "claim your reward", etc.
+        _PRIZE_KEYWORDS = (
+            "you won", "you have won", "congratulations", "congrats",
+            "claim your", "claim now", "claim prize", "claim reward",
+            "you are selected", "lucky winner", "lucky draw",
+            "free iphone", "iphone 17", "iphone 16", "iphone 15",
+            "samsung galaxy", "free samsung", "giveaway", "raffle winner",
+            "scan to claim", "scan qr to claim", "limited slots",
+        )
+        prize_hits = [kw for kw in _PRIZE_KEYWORDS if kw in text_lower]
+        if prize_hits:
+            findings.append({
+                "finding_type": "prize_lottery_scam",
+                "description": (
+                    f"Image contains classic prize/lottery scam language "
+                    f"(\"{prize_hits[0]}\"). Legitimate companies do not announce "
+                    "winners through random QR codes or unsolicited messages."
+                ),
+                "severity": "critical",
+            })
+            image_score += 50
 
-        if any(
-            kw in text_lower
-            for kw in ("password", "enter your pin", "verify account", "login")
-        ):
-            findings.append(
-                {
-                    "finding_type": "credential_phishing",
+        # GCash / PayMaya fake receipt — any two of: brand + amount + ref/status keyword
+        if any(kw in text_lower for kw in ("gcash", "paymaya", "maya")):
+            receipt_signals = sum([
+                any(m in extracted_text for m in ("₱", "PHP")),
+                any(kw in text_lower for kw in ("reference", "ref no", "ref.", "transaction", "trans id")),
+                any(kw in text_lower for kw in ("sent", "received", "successful", "payment", "paid")),
+            ])
+            if receipt_signals >= 2:
+                findings.append({
+                    "finding_type": "fake_receipt_pattern",
                     "description": (
-                        "Image appears to show a login or credential entry screen "
-                        "— possible phishing page screenshot."
+                        "Image contains GCash/PayMaya receipt-like content. "
+                        "Fake receipts are widely used to deceive online sellers. "
+                        "Verify this transaction directly inside your GCash or Maya app — "
+                        "never trust a screenshot alone."
                     ),
-                    "severity": "critical",
-                }
-            )
+                    "severity": "high",
+                })
+                image_score += 35
+
+        # Credential phishing — login / PIN entry screens
+        if any(kw in text_lower for kw in ("password", "enter your pin", "verify account", "login")):
+            findings.append({
+                "finding_type": "credential_phishing",
+                "description": (
+                    "Image appears to show a login or credential entry screen "
+                    "— possible phishing page screenshot."
+                ),
+                "severity": "critical",
+            })
             image_score += 35
 
     return {

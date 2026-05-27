@@ -19,6 +19,63 @@ _SUSPICIOUS_TLDS = frozenset({
     "cricket", "webcam", "link",
 })
 
+# Character substitutions used in homograph / typosquatting attacks.
+# Multi-char pairs are listed first so they're replaced before single-char ones.
+_CHAR_SUBS: list[tuple[str, str]] = [
+    ("vv", "w"), ("rn", "m"), ("cl", "d"),
+    ("0", "o"), ("1", "l"), ("3", "e"), ("4", "a"),
+    ("5", "s"), ("6", "b"), ("7", "t"), ("@", "a"),
+]
+
+# Well-known brands commonly impersonated in Philippine phishing campaigns.
+_BRAND_DOMAINS = frozenset({
+    "facebook", "google", "gmail", "youtube", "instagram", "twitter", "x",
+    "tiktok", "paypal", "gcash", "maya", "paymaya",
+    "bpi", "bdo", "metrobank", "unionbank", "landbank", "rcbc", "eastwest",
+    "pnb", "chinabank",
+    "lazada", "shopee", "grab", "netflix", "apple", "microsoft", "amazon",
+    "payoneer", "wise", "remitly", "yahoo", "outlook", "linkedin",
+    "whatsapp", "viber", "telegram", "spotify",
+})
+
+
+def _normalize_homoglyphs(text: str) -> str:
+    result = text.lower()
+    for fake, real in _CHAR_SUBS:
+        result = result.replace(fake, real)
+    return result
+
+
+def _levenshtein(a: str, b: str) -> int:
+    if len(a) < len(b):
+        return _levenshtein(b, a)
+    if not b:
+        return len(a)
+    prev = list(range(len(b) + 1))
+    for ch_a in a:
+        curr = [prev[0] + 1]
+        for j, ch_b in enumerate(b):
+            curr.append(min(prev[j] + (ch_a != ch_b), prev[j + 1] + 1, curr[-1] + 1))
+        prev = curr
+    return prev[-1]
+
+
+def detect_brand_impersonation(domain: str) -> tuple[bool, str]:
+    """Returns (is_impersonation, impersonated_brand).
+
+    Catches homoglyph substitutions (faceb0ok → facebook) and
+    one-character typosquatting (facebok → facebook).
+    """
+    normalized = _normalize_homoglyphs(domain)
+    for brand in _BRAND_DOMAINS:
+        # Exact match after normalization but not before → homoglyph attack confirmed.
+        if normalized == brand and domain.lower() != brand:
+            return True, brand
+        # One-edit distance after normalization → typosquatting.
+        if normalized != brand and _levenshtein(normalized, brand) == 1:
+            return True, brand
+    return False, ""
+
 _WHOIS_TIMEOUT = 5.0
 
 
@@ -36,6 +93,8 @@ class UrlFeatures:
     url_entropy: float
     is_suspicious_tld: bool
     whois_error: bool
+    is_brand_impersonation: bool
+    impersonated_brand: str
 
 
 def _shannon_entropy(text: str) -> float:
@@ -119,6 +178,7 @@ class UrlIntelligenceService:
         redirect_count, final_url = await _follow_redirects(url)
         url_entropy = _shannon_entropy(url)
         is_suspicious_tld = tld.lower() in _SUSPICIOUS_TLDS
+        is_brand_impersonation, impersonated_brand = detect_brand_impersonation(domain)
 
         return UrlFeatures(
             url=url,
@@ -133,4 +193,6 @@ class UrlIntelligenceService:
             url_entropy=url_entropy,
             is_suspicious_tld=is_suspicious_tld,
             whois_error=whois_error,
+            is_brand_impersonation=is_brand_impersonation,
+            impersonated_brand=impersonated_brand,
         )

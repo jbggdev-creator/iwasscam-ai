@@ -32,6 +32,15 @@ def _score_features(features: UrlFeatures) -> tuple[int, str, float, list[dict]]
     def _finding(finding_type: str, description: str, severity: str) -> dict:
         return {"finding_type": finding_type, "description": description, "severity": severity}
 
+    if features.is_brand_impersonation:
+        score += 60
+        findings.append(_finding(
+            "brand_impersonation",
+            f"This domain impersonates '{features.impersonated_brand}' using character substitution "
+            f"(e.g. '0' instead of 'o', '1' instead of 'l'). This is a textbook phishing technique — do NOT visit this site.",
+            "critical",
+        ))
+
     if features.whois_error or features.domain_age_days is None:
         score += 5
         findings.append(_finding(
@@ -153,6 +162,8 @@ async def _llm_explanation(features: UrlFeatures, risk_level: str) -> str:
             "tld": features.tld,
             "redirect_count": features.redirect_count,
             "url_entropy": round(features.url_entropy, 2),
+            "is_brand_impersonation": features.is_brand_impersonation,
+            "impersonated_brand": features.impersonated_brand,
             "risk_level": risk_level,
         })
         response = await llm.ainvoke([
