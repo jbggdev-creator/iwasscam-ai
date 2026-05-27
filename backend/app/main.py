@@ -44,9 +44,13 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
     # Middleware stack — last added is outermost (first to receive request)
+    # FRONTEND_URL may be comma-separated for multiple origins (e.g. stable alias + custom domain)
+    allow_origins = [u.strip() for u in settings.frontend_url.split(",") if u.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.frontend_url],
+        allow_origins=allow_origins,
+        # Also allow any Vercel preview deployment URL for this project
+        allow_origin_regex=r"https://[a-z0-9-]+-jb-s-projects14\.vercel\.app",
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
