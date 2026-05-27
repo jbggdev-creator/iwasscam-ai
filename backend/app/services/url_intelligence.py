@@ -181,7 +181,10 @@ async def _check_phishtank(url: str, api_key: str) -> bool:
     if not api_key:
         return False
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(
+            timeout=5.0,
+            headers={"User-Agent": "phishtank/iwasscam-ai"},
+        ) as client:
             resp = await client.post(
                 "https://checkurl.phishtank.com/checkurl/",
                 data={"url": url, "format": "json", "app_key": api_key},
