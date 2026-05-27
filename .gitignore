@@ -59,6 +59,11 @@ uploads/
 !public/**/*.svg
 !public/**/*.ico
 
+# ── Supabase CLI / tooling ────────────────────────────────────────────────────
+supabase/.temp/
+ECC/
+iwasscam_ai_prd_architecture_claude_md.md
+
 # ── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
