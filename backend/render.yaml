@@ -27,7 +27,7 @@ services:
         value: "false"
       - key: URLHAUS_ENABLED
         value: "true"
-      - key: PHISHTANK_API_KEY
+      - key: GOOGLE_SAFE_BROWSING_API_KEY
         sync: false
     startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
 

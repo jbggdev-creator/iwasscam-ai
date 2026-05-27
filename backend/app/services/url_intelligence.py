@@ -176,21 +176,31 @@ async def _check_urlhaus(url: str) -> bool:
         return False
 
 
-async def _check_phishtank(url: str, api_key: str) -> bool:
-    """Returns True if URL is a verified phishing site in PhishTank."""
+async def _check_google_safe_browsing(url: str, api_key: str) -> bool:
+    """Returns True if Google Safe Browsing flags the URL as malware or phishing."""
     if not api_key:
         return False
     try:
-        async with httpx.AsyncClient(
-            timeout=5.0,
-            headers={"User-Agent": "phishtank/iwasscam-ai"},
-        ) as client:
+        payload = {
+            "client": {"clientId": "iwasscam-ai", "clientVersion": "1.0.0"},
+            "threatInfo": {
+                "threatTypes": [
+                    "MALWARE",
+                    "SOCIAL_ENGINEERING",
+                    "UNWANTED_SOFTWARE",
+                    "POTENTIALLY_HARMFUL_APPLICATION",
+                ],
+                "platformTypes": ["ANY_PLATFORM"],
+                "threatEntryTypes": ["URL"],
+                "threatEntries": [{"url": url}],
+            },
+        }
+        async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.post(
-                "https://checkurl.phishtank.com/checkurl/",
-                data={"url": url, "format": "json", "app_key": api_key},
+                f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}",
+                json=payload,
             )
-            results = resp.json().get("results", {})
-            return bool(results.get("in_database") and results.get("valid"))
+            return bool(resp.json().get("matches"))
     except Exception:
         return False
 
@@ -222,10 +232,10 @@ class UrlIntelligenceService:
         is_brand_impersonation, impersonated_brand = detect_brand_impersonation(domain)
 
         urlhaus_coro = _check_urlhaus(url) if settings.urlhaus_enabled else _noop_false()
-        phishtank_coro = _check_phishtank(url, settings.phishtank_api_key)
-        urlhaus_hit, phishtank_hit = await asyncio.gather(urlhaus_coro, phishtank_coro)
-        is_known_threat = urlhaus_hit or phishtank_hit
-        threat_source = "URLhaus" if urlhaus_hit else ("PhishTank" if phishtank_hit else "")
+        gsb_coro = _check_google_safe_browsing(url, settings.google_safe_browsing_api_key)
+        urlhaus_hit, gsb_hit = await asyncio.gather(urlhaus_coro, gsb_coro)
+        is_known_threat = urlhaus_hit or gsb_hit
+        threat_source = "URLhaus" if urlhaus_hit else ("Google Safe Browsing" if gsb_hit else "")
 
         return UrlFeatures(
             url=url,

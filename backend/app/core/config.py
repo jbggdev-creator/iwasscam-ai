@@ -58,7 +58,7 @@ class Settings(BaseSettings):
 
     # Threat intelligence
     urlhaus_enabled: bool = True
-    phishtank_api_key: str = ""
+    google_safe_browsing_api_key: str = ""
 
     # Observability
     otel_enabled: bool = False
