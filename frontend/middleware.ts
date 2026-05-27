@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED = ["/scanner", "/history", "/settings"];
+// /scanner is public — free scans without an account.
+// /history and /settings require a logged-in account.
+const PROTECTED = ["/history", "/settings"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/scanner/:path*", "/history/:path*", "/settings/:path*"],
+  matcher: ["/history/:path*", "/settings/:path*"],
 };

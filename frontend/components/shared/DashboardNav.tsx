@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShieldAlert, History, Settings, LogOut, Menu, X } from "lucide-react";
-import { signOut } from "@/lib/auth";
+import { ShieldAlert, History, Settings, LogOut, Menu, X, User } from "lucide-react";
+import { signOut, useSession } from "@/lib/auth";
 
 const NAV_ITEMS = [
   { href: "/scanner", label: "Scanner", icon: ShieldAlert },
@@ -12,10 +12,25 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+function UserAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase() ?? "")
+    .join("");
+  return (
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold select-none">
+      {initials || <User className="h-4 w-4" aria-hidden />}
+    </span>
+  );
+}
+
 export function DashboardNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user;
 
   async function handleSignOut() {
     await signOut();
@@ -53,13 +68,28 @@ export function DashboardNav() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleSignOut}
-              className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <LogOut className="h-4 w-4" aria-hidden />
-              Sign out
-            </button>
+            {user ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <UserAvatar name={user.name ?? user.email ?? ""} />
+                <span className="text-sm font-medium text-foreground max-w-[120px] truncate">
+                  {user.name ?? user.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden />
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
 
             <button
               onClick={() => setMobileOpen((v) => !v)}
@@ -94,13 +124,31 @@ export function DashboardNav() {
                 {label}
               </Link>
             ))}
-            <button
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <LogOut className="h-4 w-4" aria-hidden />
-              Sign out
-            </button>
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <UserAvatar name={user.name ?? user.email ?? ""} />
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {user.name ?? user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden />
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         )}
       </div>
