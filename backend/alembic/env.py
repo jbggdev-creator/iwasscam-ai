@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 from app.core.config import get_settings
+from app.db.session import _asyncpg_connect_args
 from app.db.models.base import Base
 import app.db.models.scan  # noqa: F401 — registers models
 import app.db.models.rag_document  # noqa: F401 — registers models
@@ -37,9 +38,10 @@ def do_run_migrations(connection):
 
 async def run_async_migrations() -> None:
     settings = get_settings()
-    connect_args = {"ssl": True} if settings.environment == "production" else {}
+    is_prod = settings.environment == "production"
+    clean_url, connect_args = _asyncpg_connect_args(settings.database_url, ssl=is_prod)
     connectable = create_async_engine(
-        settings.database_url, poolclass=pool.NullPool, connect_args=connect_args
+        clean_url, poolclass=pool.NullPool, connect_args=connect_args
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
