@@ -8,9 +8,9 @@ services:
     healthCheckPath: /api/v1/health
     envVars:
       - key: DATABASE_URL
-        value: postgresql+asyncpg://postgres:263cbddd-fb1b-4d9b-b780-448c87aa5a7a@db.sgteplpggutfomvqpyma.supabase.co:5432/postgres
+        sync: false
       - key: REDIS_URL
-        value: rediss://default:gQAAAAAAAZEFAAIgcDFjMjczZTNjMDA0MGY0ZWZhYjUyNmQ4MjdiMTVmMzc3NQ@inviting-clam-102661.upstash.io:6379
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: FRONTEND_URL
@@ -25,6 +25,10 @@ services:
         value: "false"
       - key: USE_LLM
         value: "false"
+      - key: URLHAUS_ENABLED
+        value: "true"
+      - key: PHISHTANK_API_KEY
+        sync: false
     startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
 
   - type: worker
@@ -35,9 +39,9 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql+asyncpg://postgres:263cbddd-fb1b-4d9b-b780-448c87aa5a7a@db.sgteplpggutfomvqpyma.supabase.co:5432/postgres
+        sync: false
       - key: REDIS_URL
-        value: rediss://default:gQAAAAAAAZEFAAIgcDFjMjczZTNjMDA0MGY0ZWZhYjUyNmQ4MjdiMTVmMzc3NQ@inviting-clam-102661.upstash.io:6379
+        sync: false
       - key: SECRET_KEY
         fromService:
           name: iwasscam-api
