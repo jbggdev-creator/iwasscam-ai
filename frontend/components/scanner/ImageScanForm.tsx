@@ -71,12 +71,7 @@ export function ImageScanForm() {
       const scanResult = await scanImage(file);
       setResult(scanResult);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong.";
-      if (msg.toLowerCase().includes("not yet implemented")) {
-        setError("Screenshot analysis is coming soon. URL and text scanning are available now.");
-      } else {
-        setError(msg);
-      }
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
