@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.db.models.rag_document import RagDocument
 from app.db.repositories.rag_repo import rag_repo
 from app.services.embedding_service import get_embedding_service
@@ -36,12 +37,16 @@ class RagService:
         query: str,
         limit: int | None = None,
     ) -> list[dict]:
-        from app.core.config import get_settings
-        effective_limit = limit if limit is not None else get_settings().rag_retrieval_limit
+        settings = get_settings()
+        effective_limit = limit if limit is not None else settings.rag_retrieval_limit
 
-        embedding_svc = get_embedding_service()
-        query_embedding = await embedding_svc.embed_one(query)
-        docs = await rag_repo.search_similar(db, query_embedding, limit=effective_limit)
+        if settings.rag_embedding_enabled:
+            embedding_svc = get_embedding_service()
+            query_embedding = await embedding_svc.embed_one(query)
+            docs = await rag_repo.search_similar(db, query_embedding, limit=effective_limit)
+        else:
+            logger.debug("Embedding disabled — using keyword fallback for RAG retrieval")
+            docs = await rag_repo.search_keyword(db, query, limit=effective_limit)
 
         return [
             {

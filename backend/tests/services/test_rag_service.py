@@ -95,3 +95,37 @@ class TestRagRetrieve:
         mock_search.assert_awaited_once()
         _, kwargs = mock_search.call_args
         assert kwargs["limit"] == 10
+
+    async def test_retrieve_uses_keyword_fallback_when_embedding_disabled(self, service):
+        mock_doc = MagicMock()
+        mock_doc.source = "BSP Advisory"
+        mock_doc.content = "GCash scam advisory content."
+        mock_doc.metadata_ = {}
+
+        mock_settings = MagicMock()
+        mock_settings.rag_embedding_enabled = False
+        mock_settings.rag_retrieval_limit = 3
+
+        with patch("app.services.rag_service.get_settings", return_value=mock_settings):
+            with patch("app.services.rag_service.rag_repo.search_keyword", AsyncMock(return_value=[mock_doc])) as mock_kw:
+                with patch("app.services.rag_service.rag_repo.search_similar") as mock_vec:
+                    mock_db = AsyncMock()
+                    results = await service.retrieve(mock_db, "gcash scam")
+
+        mock_kw.assert_awaited_once()
+        mock_vec.assert_not_called()
+        assert len(results) == 1
+        assert results[0]["source"] == "BSP Advisory"
+
+    async def test_retrieve_skips_embedding_service_when_disabled(self, service):
+        mock_settings = MagicMock()
+        mock_settings.rag_embedding_enabled = False
+        mock_settings.rag_retrieval_limit = 3
+
+        with patch("app.services.rag_service.get_settings", return_value=mock_settings):
+            with patch("app.services.rag_service.rag_repo.search_keyword", AsyncMock(return_value=[])):
+                with patch("app.services.rag_service.get_embedding_service") as mock_emb_factory:
+                    mock_db = AsyncMock()
+                    await service.retrieve(mock_db, "investment scam")
+
+        mock_emb_factory.assert_not_called()

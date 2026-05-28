@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     # RAG / Embeddings
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     rag_retrieval_limit: int = 3
+    rag_embedding_enabled: bool = True  # set False on memory-constrained hosts
 
     # Security
     sentry_dsn: str = ""
