@@ -103,3 +103,44 @@ def test_parametrized_pattern_detection(scenario: str, expected_type: str):
     result = detect_social_engineering(scenario)
     types = {s["finding_type"] for s in result.signals}
     assert expected_type in types
+
+
+def test_job_scam_pay_amount_detected():
+    result = detect_social_engineering(
+        "A recruiter asked me to pay 500 pesos for onboarding before the interview starts."
+    )
+    types = {s["finding_type"] for s in result.signals}
+    assert "upfront_payment_demand" in types or "fake_job_offer" in types
+    assert result.risk_level in ("medium", "high", "critical")
+
+
+def test_onboarding_fee_detected():
+    result = detect_social_engineering(
+        "The company requires an onboarding fee of ₱1500 before you can begin training."
+    )
+    types = {s["finding_type"] for s in result.signals}
+    assert "upfront_payment_demand" in types
+
+
+def test_training_fee_detected():
+    result = detect_social_engineering(
+        "Please pay the training fee before your first day at work."
+    )
+    types = {s["finding_type"] for s in result.signals}
+    assert "upfront_payment_demand" in types
+
+
+def test_placement_fee_detected():
+    result = detect_social_engineering(
+        "Our agency charges a placement fee of ₱3000 for domestic helpers."
+    )
+    types = {s["finding_type"] for s in result.signals}
+    assert "upfront_payment_demand" in types or "fake_job_offer" in types
+
+
+def test_recruiter_pay_fake_job_detected():
+    result = detect_social_engineering(
+        "Recruiter told me to pay ₱800 for the ID before I can start."
+    )
+    types = {s["finding_type"] for s in result.signals}
+    assert "fake_job_offer" in types or "upfront_payment_demand" in types

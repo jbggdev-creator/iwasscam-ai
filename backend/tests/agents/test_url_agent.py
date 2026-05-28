@@ -19,6 +19,10 @@ def _make_features(**overrides) -> UrlFeatures:
         url_entropy=3.2,
         is_suspicious_tld=False,
         whois_error=False,
+        is_brand_impersonation=False,
+        impersonated_brand="",
+        is_known_threat=False,
+        threat_source="",
     )
     base.update(overrides)
     return UrlFeatures(**base)

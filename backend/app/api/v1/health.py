@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,13 +38,17 @@ async def _ping_redis(redis_url: str) -> bool:
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
     db: AsyncSession = Depends(get_db),
-) -> HealthResponse:
+):
     settings = get_settings()
     db_ok = await _ping_db(db)
     redis_ok = await _ping_redis(settings.redis_url)
-    return HealthResponse(
-        status="ok" if (db_ok and redis_ok) else "degraded",
+    healthy = db_ok and redis_ok
+    response = HealthResponse(
+        status="ok" if healthy else "degraded",
         version=settings.app_version,
         db=db_ok,
         redis=redis_ok,
     )
+    if not healthy:
+        return JSONResponse(status_code=503, content=response.model_dump())
+    return response

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 # (regex_pattern, finding_type, description, severity, score)
 _SE_PATTERNS: list[tuple[str, str, str, str, int]] = [
     (
-        r"(?i)\b(bayad muna|advance payment|registration fee|membership fee|processing fee|reservation fee|downpayment|advance.*fee|magbayad.*muna|pabayad)\b",
+        r"(?i)\b(bayad muna|advance payment|registration fee|membership fee|processing fee|reservation fee|downpayment|advance.*fee|magbayad.*muna|pabayad|onboarding fee|training fee|placement fee|application fee|hiring fee|need to pay|must pay|pay \d+|bayad ng \d+)\b",
         "upfront_payment_demand",
         "Requests payment before delivering goods or services — the most common Philippine scam pattern.",
         "critical",
@@ -32,7 +32,7 @@ _SE_PATTERNS: list[tuple[str, str, str, str, int]] = [
         40,
     ),
     (
-        r"(?i)\b(work from home|wfh.*easy|no experience needed|earn \d+.*per (day|hour)|guaranteed income|passive income|madali.*pera)\b",
+        r"(?i)\b(work from home|wfh.*easy|no experience needed|earn \d+.*per (day|hour)|guaranteed income|passive income|madali.*pera|recruiter.*fee|recruiter.*pay|pay.*onboarding|hiring fee|placement fee|job.*application.*fee)\b",
         "fake_job_offer",
         "Job offer promises unusually high pay with no experience required — likely a job scam.",
         "high",
