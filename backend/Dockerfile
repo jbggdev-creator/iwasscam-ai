@@ -34,9 +34,8 @@ COPY start.sh .
 
 RUN chmod +x start.sh
 
-# Pre-download fastembed model into a known path accessible to all users
-ENV FASTEMBED_CACHE_PATH=/app/.cache/fastembed
-RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')"
+# Pre-download fastembed model into a known path so runtime can load it without downloading
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5', cache_dir='/app/.cache/fastembed')"
 
 RUN useradd --no-create-home --shell /bin/false appuser
 RUN chown -R appuser /app/.cache

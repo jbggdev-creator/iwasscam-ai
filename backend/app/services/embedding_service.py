@@ -21,7 +21,7 @@ class EmbeddingService:
         if self._model is None:
             from fastembed import TextEmbedding
             logger.info("Loading embedding model: %s", self._model_name)
-            self._model = TextEmbedding(self._model_name)
+            self._model = TextEmbedding(self._model_name, cache_dir="/app/.cache/fastembed")
         return self._model
 
     def _encode_sync(self, texts: list[str]) -> list[list[float]]:
