@@ -34,12 +34,12 @@ COPY start.sh .
 
 RUN chmod +x start.sh
 
-# Pre-download fastembed model so it's baked into the image (no runtime download needed)
+# Pre-download fastembed model into a known path accessible to all users
+ENV FASTEMBED_CACHE_PATH=/app/.cache/fastembed
 RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')"
 
 RUN useradd --no-create-home --shell /bin/false appuser
-# Give appuser read access to the cached model files
-RUN chown -R appuser /root/.cache/fastembed 2>/dev/null || true
+RUN chown -R appuser /app/.cache
 
 USER appuser
 

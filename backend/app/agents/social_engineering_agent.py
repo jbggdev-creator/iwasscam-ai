@@ -46,7 +46,7 @@ _SE_PATTERNS: list[tuple[str, str, str, str, int]] = [
         25,
     ),
     (
-        r"(?i)\b(invest.*guarante[a-z]*|guarante[a-z]*.*return|guarante[a-z]*.*profit|double.*money|doubling.*investment|crypto.*profit|crypto.*guarante[a-z]*|bitcoin.*earning|paluwagan.*guarante[a-z]*|network marketing.*guarante[a-z]*)\b",
+        r"(?i)\b(invest.*guarante[a-z]*|guarante[a-z]*.*(return[a-z]*|profit[a-z]*|earn[a-z]*)|double.*money|doubling.*investment|crypto.*(profit[a-z]*|guarante[a-z]*)|bitcoin.*earn[a-z]*|paluwagan.*guarante[a-z]*|network marketing.*guarante[a-z]*)\b",
         "investment_scam_signal",
         "Promises guaranteed investment returns — no legitimate investment can guarantee profits.",
         "high",
